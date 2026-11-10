@@ -65,6 +65,7 @@ def generate(env):
         cudaToolkitPath = env["CUDA_TOOLKIT_PATH"]
     except:
         paths = [
+            os.environ.get("CONDA_PREFIX", ""),
             home + "/NVIDIA_CUDA_TOOLKIT",
             home + "/Apps/NVIDIA_CUDA_TOOLKIT",
             home + "/Apps/NVIDIA_CUDA_TOOLKIT",

@@ -36,6 +36,35 @@ void garbage_collection(auto policy, auto& v, auto& parent_v) {
 
 	// TODO: implement garbage collection
 
+	thrust::for_each(
+		policy,
+		parent_v.begin(), parent_v.end(),
+		Wrapper<&node_product::project_stencil, uint32_t*>(thrust::raw_pointer_cast(stencil.data()))
+	);
+
+	// Compute lower bound into old list
+	auto new_end = thrust::remove_if(
+		policy,
+		v.begin(), v.end(), 
+		stencil.begin(),
+		::cuda::std::identity{}
+	);
+	v.resize(new_end - v.begin());
+	
+	// Update parent layer's children to new lower bound by applying stencil
+	thrust::exclusive_scan(stencil.begin(), stencil.end(), stencil.begin());
+	auto count_it = thrust::make_counting_iterator<uint32_t>(0);
+	auto map = thrust::make_transform_iterator(
+		thrust::make_zip_iterator(thrust::make_tuple(count_it, stencil.begin())),
+		minus()
+	);
+
+	thrust::for_each(
+		policy, 
+		parent_v.begin(), parent_v.end(),
+		apply_map_func(map)
+	);
+
 	/*
 	Example:
 	Adding 1 to each element of stencil
